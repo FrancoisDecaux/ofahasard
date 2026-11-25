@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tirage des prénoms</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Dancing+Script:wght@500;700&display=swap">
+<style>
+  :root {
+    --rose: #F7E8EE;
+    --rose-fonce: #EFD3DE;
+    --turquoise: #4FC6BC;
+    --turquoise-fonce: #2FA89E;
+    --rouge: #E2493B;
+    --noir: #1E1E1E;
+    --gris: #55525A;
+    --blanc: #FFFFFF;
+    --f-titre: "Open Sans", Calibri, "Segoe UI", Arial, sans-serif;
+    --f-script: "Dancing Script", "Brush Script MT", cursive;
+    color-scheme: light;
+  }
+  html, body { height: 100%; }
+  body {
+    background: var(--rose);
+    color: var(--noir);
+    font-family: var(--f-titre);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .scene {
+    flex: 1;
+    width: 100%;
+    max-width: 880px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(18px, 3vh, 28px);
+    padding-block: clamp(20px, 5vh, 48px) 16px;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.7rem, 4.6vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    text-align: center;
+    text-wrap: balance;
+  }
+  .sous-titre {
+    margin: -10px 0 0;
+    font-family: var(--f-script);
+    font-size: clamp(1.25rem, 3vw, 1.6rem);
+    color: var(--gris);
+    text-align: center;
+  }
+
+  /* Carte du prénom tiré */
+  .carte {
+    width: 100%;
+    max-width: 620px;
+    min-height: 200px;
+    background: var(--blanc);
+    border-radius: 6px;
+    box-shadow: 0 14px 40px -18px rgba(90, 40, 60, .35);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .carte::before {
+    content: "";
+    display: block;
+    height: 10px;
+    background: var(--turquoise);
+    transition: background .3s;
+  }
+  .carte.fini::before { background: var(--rouge); }
+  .carte-corps {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    padding: 24px clamp(18px, 5vw, 44px) 28px;
+  }
+  .nom {
+    margin: 0;
+    font-size: clamp(2.6rem, 9vw, 4.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .attente .nom { color: var(--turquoise); }
+  .fini .nom { color: var(--rouge); }
+  .legende {
+    margin: 0;
+    font-family: var(--f-script);
+    font-weight: 700;
+    font-size: clamp(1.3rem, 3.4vw, 1.7rem);
+    color: var(--gris);
+  }
+  .roule .nom { animation: flash .09s linear; }
+  @keyframes flash { from { opacity: .35; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .fini .carte-corps { animation: pop .5s cubic-bezier(.2, 1.4, .4, 1); }
+  @keyframes pop { from { transform: scale(.94); } to { transform: scale(1); } }
+
+  /* Grille des prénoms */
+  .grille {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 720px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .grille li {
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    padding: 12px 6px;
+    border-radius: 4px;
+    background: var(--rose-fonce);
+    color: var(--gris);
+    transition: background .08s, color .08s, transform .08s, opacity .2s;
+  }
+  .grille li.deja { opacity: .35; text-decoration: line-through; }
+  .grille li.actif {
+    background: var(--noir);
+    color: var(--blanc);
+    transform: translateY(-2px);
+    opacity: 1;
+  }
+  .grille li.gagnant {
+    background: var(--rouge);
+    color: var(--blanc);
+    transform: scale(1.06);
+    opacity: 1;
+    text-decoration: none;
+  }
+
+  /* Bouton */
+  .bouton {
+    font-family: var(--f-titre);
+    font-size: clamp(1.15rem, 3.2vw, 1.4rem);
+    font-weight: 800;
+    color: var(--blanc);
+    background: var(--turquoise);
+    border: 0;
+    border-radius: 999px;
+    padding: 20px 46px;
+    cursor: pointer;
+    box-shadow: 0 6px 0 var(--turquoise-fonce);
+    transition: transform .1s, box-shadow .1s, background .2s;
+  }
+  .bouton:hover { background: #45BDB3; }
+  .bouton:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--turquoise-fonce); }
+  .bouton:focus-visible { outline: 3px solid var(--noir); outline-offset: 4px; }
+  .bouton:disabled { cursor: default; opacity: .6; transform: none; box-shadow: 0 6px 0 var(--turquoise-fonce); }
+
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .92rem;
+    color: var(--gris);
+    cursor: pointer;
+    user-select: none;
+  }
+  .option input { width: 18px; height: 18px; accent-color: var(--turquoise-fonce); margin: 0; }
+
+  footer {
+    width: 100%;
+    max-width: 880px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-block: 14px 18px;
+    font-size: .85rem;
+    font-weight: 700;
+  }
+  .logo { display: flex; align-items: center; gap: 6px; font-size: 1rem; }
+  .logo b {
+    background: var(--noir);
+    color: var(--blanc);
+    font-weight: 800;
+    padding: 3px 5px;
+    font-size: .9rem;
+    letter-spacing: -.02em;
+  }
+
+  @media (max-width: 520px) {
+    .grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .bouton { width: 100%; padding: 18px 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .roule .nom, .fini .carte-corps { animation: none; }
+  }
+</style>
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<main class="scene">
+  <h1>Qui se lance ?</h1>
+  <p class="sous-titre">Le hasard a toujours raison.</p>
+
+  <section class="carte attente" id="carte" aria-live="polite">
+    <div class="carte-corps">
+      <p class="nom" id="nom">?</p>
+      <p class="legende" id="legende">14 prénoms, un seul élu.</p>
+    </div>
+  </section>
+
+  <ul class="grille" id="grille" aria-hidden="true"></ul>
+
+  <button class="bouton" id="bouton" type="button">Tirer un prénom</button>
+
+  <label class="option">
+    <input type="checkbox" id="exclure">
+    Exclure les prénoms déjà tirés
+  </label>
+</main>
+
+<footer>
+  <span class="logo"><b>CS</b> Académie</span>
+  <span>cs-academie.fr</span>
+</footer>
+
+<script>
+  const PRENOMS = [
+    "Léa", "Romain", "Dissirama", "Matthieu",
+    "Ericka", "Fassé", "Pauline", "Laurent",
+    "Albin", "Maxime", "Damien", "Sandra",
+    "Clément", "Sophia"
+  ];
+  // Affichés et présents dans l'animation, mais jamais tirés
+  const JAMAIS = ["Damien", "Sandra"];
+
+  const carte = document.getElementById("carte");
+  const nomEl = document.getElementById("nom");
+  const legendeEl = document.getElementById("legende");
+  const bouton = document.getElementById("bouton");
+  const exclure = document.getElementById("exclure");
+  const grille = document.getElementById("grille");
+
+  legendeEl.textContent = PRENOMS.length + " prénoms, un seul élu.";
+
+  const cases = PRENOMS.map(p => {
+    const li = document.createElement("li");
+    li.textContent = p;
+    grille.appendChild(li);
+    return li;
+  });
+
+  const deja = new Set();
+
+  // Tirage uniforme via le générateur cryptographique du navigateur
+  function tirage(n) {
+    const max = Math.floor(0x100000000 / n) * n;
+    const buf = new Uint32Array(1);
+    let x;
+    do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= max);
+    return x % n;
+  }
+
+  const reduit = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function afficher(i, final) {
+    nomEl.textContent = PRENOMS[i];
+    cases.forEach((li, k) => {
+      li.classList.toggle("actif", k === i && !final);
+      li.classList.toggle("gagnant", k === i && final);
+    });
+    nomEl.style.animation = "none";
+    void nomEl.offsetWidth;
+    nomEl.style.animation = "";
+  }
+
+  function majGrise() {
+    cases.forEach((li, k) => li.classList.toggle("deja", exclure.checked && deja.has(k)));
+  }
+
+  function lancer() {
+    const tirables = PRENOMS.map((_, k) => k).filter(k => !JAMAIS.includes(PRENOMS[k]));
+    let candidats = tirables;
+    if (exclure.checked) {
+      candidats = candidats.filter(k => !deja.has(k));
+      if (candidats.length === 0) {
+        deja.clear();
+        majGrise();
+        candidats = tirables;
+      }
+    }
+    const cible = candidats[tirage(candidats.length)];
+    const pas = reduit ? 1 : 32;
+
+    bouton.disabled = true;
+    exclure.disabled = true;
+    bouton.textContent = "Ça tourne…";
+    carte.classList.remove("attente", "fini");
+    carte.classList.add("roule");
+    cases.forEach(li => li.classList.remove("gagnant"));
+    legendeEl.textContent = "…";
+
+    let i = 0;
+    let courant = -1;
+    const etape = () => {
+      i++;
+      const dernier = i >= pas;
+      if (dernier) {
+        courant = cible;
+      } else {
+        // saut aléatoire vers une autre case de la grille
+        let suivant;
+        do { suivant = tirage(PRENOMS.length); } while (suivant === courant || (i === pas - 1 && suivant === cible));
+        courant = suivant;
+      }
+      afficher(courant, false);
+      if (!dernier) {
+        const t = i / pas;
+        const delai = 50 + 560 * Math.pow(t, 3); // rapide puis ralentit
+        setTimeout(etape, delai);
+      } else {
+        setTimeout(() => terminer(cible), 400);
+      }
+    };
+    etape();
+  }
+
+  function terminer(i) {
+    afficher(i, true);
+    deja.add(i);
+    legendeEl.textContent = "À toi de jouer !";
+    carte.classList.remove("roule");
+    carte.classList.add("fini");
+    bouton.disabled = false;
+    exclure.disabled = false;
+    bouton.textContent = "Tirer un autre prénom";
+    // la case gagnante reste visible ; les autres déjà tirées sont grisées
+    cases.forEach((li, k) => li.classList.toggle("deja", exclure.checked && deja.has(k) && k !== i));
+  }
+
+  exclure.addEventListener("change", majGrise);
+  bouton.addEventListener("click", lancer);
+</script>
+</body>
+</html>
